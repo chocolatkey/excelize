@@ -36,11 +36,28 @@ type xlsxSI struct {
 	R []xlsxR `xml:"r"`
 }
 
+func nestStringInTag(cnt string, tag string) string {
+	return "<" + tag + ">" + cnt + "</" + tag + ">"
+}
+
 func (x xlsxSI) String() string {
 	if len(x.R) > 0 {
 		var rows strings.Builder
 		for _, s := range x.R {
-			rows.WriteString(s.T)
+			rpr := s.RPr
+			txt := s.T
+			if rpr != nil {
+				if rpr.B != nil {
+					txt = nestStringInTag(txt, "b")
+				}
+				if rpr.I != nil {
+					txt = nestStringInTag(txt, "i")
+				}
+				if rpr.U != nil {
+					txt = nestStringInTag(txt, "u")
+				}
+			}
+			rows.WriteString(txt)
 		}
 		return rows.String()
 	}
@@ -61,7 +78,9 @@ type xlsxR struct {
 // they are directly applied to the run and supersede any formatting from
 // styles.
 type xlsxRPr struct {
-	B      string         `xml:"b,omitempty"`
+	B      *bool          `xml:"b,omitempty"`
+	I      *bool          `xml:"i,omitempty"`
+	U      *bool          `xml:"u,omitempty"`
 	Sz     *attrValFloat  `xml:"sz"`
 	Color  *xlsxColor     `xml:"color"`
 	RFont  *attrValString `xml:"rFont"`
